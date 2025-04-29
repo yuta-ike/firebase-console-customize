@@ -8,7 +8,7 @@ type Settings = {
 
 // Configure the content script to run on Firebase Console project pages
 export const config: PlasmoCSConfig = {
-  matches: ["https://console.firebase.google.com/project/*"],
+  matches: ["https://console.firebase.google.com/*"],
 };
 
 console.log("Firebase Background Changer: Content script loaded.");
