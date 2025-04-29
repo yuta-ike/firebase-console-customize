@@ -7,13 +7,18 @@
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",
-    "package": "plasmo package"
+    "package": "plasmo package",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format .",
+    "format:fix": "biome format --write ."
   },
   "dependencies": {
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
     "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
     "@tailwindcss/postcss": "^4.1.4",
     "@types/chrome": "^0.0.317",
@@ -27,11 +32,19 @@
     "typescript": "^5.8.3"
   },
   "manifest": {
-    "host_permissions": [
-      "https://console.firebase.google.com/*"
-    ],
-    "permissions": [
-      "storage"
+    "host_permissions": ["https://console.firebase.google.com/*"],
+    "permissions": ["storage", "tabs"]
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@swc/core",
+      "esbuild",
+      "lmdb",
+      "msgpackr-extract",
+      "sharp"
     ]
+  },
+  "volta": {
+    "node": "22.15.0"
   }
 }

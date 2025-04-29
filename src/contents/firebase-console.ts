@@ -15,9 +15,13 @@ console.log("Firebase Background Changer: Content script loaded.");
 // Function to apply background color
 const applyBackgroundColor = () => {
   const url = window.location.href;
-  const match = url.match(/console\.firebase\.google\.com\/project\/([^/]+)/);
+  // Updated regex to handle optional /u/<number>/ segment
+  const match = url.match(
+    /console\.firebase\.google\.com(?:\/u\/\d+)?\/project\/([^/]+)/
+  );
 
-  if (match && match[1]) {
+  if (match?.[1]) {
+    // Changed to optional chaining
     const currentProjectId = match[1];
     console.log(
       "Firebase Background Changer: Current Project ID:",

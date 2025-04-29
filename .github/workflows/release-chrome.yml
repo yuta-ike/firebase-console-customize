@@ -1,0 +1,73 @@
+name: Release Chrome Extension
+
+on:
+  push:
+    tags:
+      - "v*.*.*" # Trigger on version tags like v1.0.0
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.15.0"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run Biome check
+        run: pnpm lint
+
+      - name: Build and package Chrome extension
+        id: package
+        run: pnpm package --target=chrome-mv3
+
+      - name: Get package name and version from tag
+        id: vars
+        run: |
+          echo "package_name=$(jq -r .name package.json)" >> $GITHUB_OUTPUT
+          echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Set zip path
+        id: paths
+        run: |
+          echo "zip_path=build/chrome-mv3-prod/${{ steps.vars.outputs.package_name }}-${{ steps.vars.outputs.version }}.zip" >> $GITHUB_OUTPUT
+          echo "zip_name=${{ steps.vars.outputs.package_name }}-${{ steps.vars.outputs.version }}.zip" >> $GITHUB_OUTPUT
+
+      - name: List build directory
+        run: ls -R build/chrome-mv3-prod
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Chrome Extension Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.paths.outputs.zip_path }}
+          asset_name: ${{ steps.paths.outputs.zip_name }}
+          asset_content_type: application/zip

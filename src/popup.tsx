@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import "./assets/style.css";
+import "./assets/style.css"; // Path relative to src/popup.tsx
 
 type ColorSetting = {
   projectId: string;
@@ -28,6 +28,29 @@ function IndexPopup() {
     });
   }, []);
 
+  // Get current tab's project ID on popup open
+  useEffect(() => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]?.url) {
+        const url = tabs[0].url;
+        // Use the same updated regex as in content script
+        const match = url.match(
+          /console\.firebase\.google\.com(?:\/u\/\d+)?\/project\/([^/]+)/
+        );
+        if (match?.[1]) {
+          const currentTabProjectId = match[1];
+          // Only prefill if the ID isn't already saved and the input is empty
+          if (
+            projectId === "" &&
+            !settings.some((s) => s.projectId === currentTabProjectId)
+          ) {
+            setProjectId(currentTabProjectId);
+          }
+        }
+      }
+    });
+  }, [settings, projectId]); // Depend on projectId too to avoid overwriting manual input
+
   // Save settings to storage
   const saveSettings = (newSettings: ColorSetting[]) => {
     const settingsToSave: Settings = newSettings.reduce((acc, setting) => {
@@ -37,10 +60,23 @@ function IndexPopup() {
     chrome.storage.sync.set({ projectColors: settingsToSave });
   };
 
+  // Generate a random hex color
+  const handleShuffleColor = () => {
+    const randomColor = `#${Math.floor(Math.random() * 16777215)
+      .toString(16)
+      .padStart(6, "0")}`;
+    setColor(randomColor);
+  };
+
   // Handle adding a new setting
   const handleAddSetting = () => {
     if (!projectId) {
       alert("Project ID を入力してください。");
+      return;
+    }
+    // Check if projectId already exists
+    if (settings.some((s) => s.projectId === projectId)) {
+      alert("この Project ID は既に追加されています。");
       return;
     }
     const newSetting = { projectId, color };
@@ -103,9 +139,19 @@ function IndexPopup() {
             onChange={(e) => setColor(e.target.value)}
             className="mt-1 h-8 w-16 border border-gray-300 rounded-md cursor-pointer"
           />
-          <span className="text-sm">{color}</span>
+          <span className="text-sm mr-2">{color}</span>
+          {/* Shuffle Button */}
+          <button
+            type="button"
+            onClick={handleShuffleColor}
+            className="px-2 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300"
+            title="ランダムな色を生成"
+          >
+            🎲
+          </button>
         </div>
         <button
+          type="button" // Added type="button"
           onClick={handleAddSetting}
           className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
@@ -129,11 +175,13 @@ function IndexPopup() {
                   <div
                     className="w-4 h-4 rounded border"
                     style={{ backgroundColor: setting.color }}
-                  ></div>
+                  />{" "}
+                  {/* Made self-closing */}
                   <span className="font-mono text-sm">{setting.projectId}</span>
                 </div>
 
                 <button
+                  type="button" // Added type="button"
                   onClick={() => handleDeleteSetting(setting.projectId)}
                   className="px-2 py-1 text-xs text-red-600 hover:text-red-800"
                   title="削除"
