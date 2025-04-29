@@ -11,7 +11,8 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format .",
-    "format:fix": "biome format --write ."
+    "format:fix": "biome format --write .",
+    "test": "node --experimental-strip-types --test src/utils/color.test.ts"
   },
   "dependencies": {
     "react": "^19.1.0",
@@ -22,6 +23,7 @@
     "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
     "@tailwindcss/postcss": "^4.1.4",
     "@types/chrome": "^0.0.317",
+    "@types/node": "^22.15.3",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "autoprefixer": "^10.4.21",
@@ -32,8 +34,13 @@
     "typescript": "^5.8.3"
   },
   "manifest": {
-    "host_permissions": ["https://console.firebase.google.com/*"],
-    "permissions": ["storage", "tabs"]
+    "host_permissions": [
+      "https://console.firebase.google.com/*"
+    ],
+    "permissions": [
+      "storage",
+      "tabs"
+    ]
   },
   "pnpm": {
     "onlyBuiltDependencies": [

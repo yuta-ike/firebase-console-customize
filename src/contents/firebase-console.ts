@@ -1,4 +1,5 @@
 import type { PlasmoCSConfig } from "plasmo";
+import { getContrastColor } from "../utils/color.ts"; // Import the helper function
 
 // Define the type for the stored settings
 type Settings = {
@@ -12,17 +13,15 @@ export const config: PlasmoCSConfig = {
 
 console.log("Firebase Background Changer: Content script loaded.");
 
-// Function to apply background color
+// Function to apply background color and text contrast (uses imported getContrastColor)
 const applyBackgroundColor = () => {
   const url = window.location.href;
-  // Updated regex to handle optional /u/<number>/ segment
   const match = url.match(
     /console\.firebase\.google\.com(?:\/u\/\d+)?\/project\/([^/]+)/
   );
-  const targetElements = document.querySelectorAll(".app-bar"); // Target elements with class 'app-bar'
+  const targetElements = document.querySelectorAll(".app-bar");
 
   if (match?.[1]) {
-    // Changed to optional chaining
     const currentProjectId = match[1];
     console.log(
       "Firebase Background Changer: Current Project ID:",
@@ -32,38 +31,63 @@ const applyBackgroundColor = () => {
     chrome.storage.sync.get(["projectColors"], (result) => {
       const storedSettings: Settings = result.projectColors || {};
       const color = storedSettings[currentProjectId];
+      // Provide default empty string if color is null to avoid TS error
+      const contrastColor = color ? getContrastColor(color) : "";
 
       if (color) {
         console.log(
-          `Firebase Background Changer: Applying color ${color} for project ${currentProjectId}`
+          `Firebase Background Changer: Applying color ${color} (contrast: ${contrastColor}) for project ${currentProjectId}`
         );
-        // Apply to all elements with class 'app-bar'
         for (const element of targetElements) {
           if (element instanceof HTMLElement) {
-            // Type check for safety
             element.style.backgroundColor = color;
+            const textElements = element.querySelectorAll(
+              "[data-fire-popup-overlay-trigger]"
+            );
+            // biome-ignore lint/complexity/noForEach: NodeListOf doesn't have Symbol.iterator easily
+            textElements.forEach((textEl) => {
+              if (textEl instanceof HTMLElement) {
+                textEl.style.color = contrastColor;
+              }
+            });
           }
         }
       } else {
         console.log(
-          `Firebase Background Changer: No color found for project ${currentProjectId}. Resetting background.`
+          `Firebase Background Changer: No color found for project ${currentProjectId}. Resetting background and text.`
         );
-        // Reset background for target elements
         for (const element of targetElements) {
           if (element instanceof HTMLElement) {
-            element.style.backgroundColor = ""; // Reset to default
+            element.style.backgroundColor = "";
+            const textElements = element.querySelectorAll(
+              "[data-fire-popup-overlay-trigger]"
+            );
+            // biome-ignore lint/complexity/noForEach: NodeListOf doesn't have Symbol.iterator easily
+            textElements.forEach((textEl) => {
+              if (textEl instanceof HTMLElement) {
+                textEl.style.color = ""; // Reset text color
+              }
+            });
           }
         }
       }
     });
   } else {
     console.log(
-      "Firebase Background Changer: Not on a project page or Project ID not found. Resetting background."
+      "Firebase Background Changer: Not on a project page or Project ID not found. Resetting background and text."
     );
-    // Reset background for target elements
     for (const element of targetElements) {
       if (element instanceof HTMLElement) {
         element.style.backgroundColor = "";
+        const textElements = element.querySelectorAll(
+          "[data-fire-popup-overlay-trigger]"
+        );
+        // biome-ignore lint/complexity/noForEach: NodeListOf doesn't have Symbol.iterator easily
+        textElements.forEach((textEl) => {
+          if (textEl instanceof HTMLElement) {
+            textEl.style.color = ""; // Reset text color
+          }
+        });
       }
     }
   }
@@ -73,21 +97,17 @@ const applyBackgroundColor = () => {
 applyBackgroundColor();
 
 // Firebase Console is an SPA, so we need to re-apply the color on navigation changes.
-// Using MutationObserver to detect URL changes (or changes in a key element).
-// A simple approach is to observe the <title> element, which often changes during SPA navigation.
 const observeTitleChanges = () => {
   const titleElement = document.querySelector("title");
   if (!titleElement) {
     console.error(
       "Firebase Background Changer: Could not find <title> element to observe."
     );
-    // Fallback: Use setInterval as a less efficient alternative if title observation fails
-    setInterval(applyBackgroundColor, 1000); // Check every second
+    setInterval(applyBackgroundColor, 1000);
     return;
   }
 
   const observer = new MutationObserver((mutations) => {
-    // Check if the URL likely changed by observing title changes
     console.log(
       "Firebase Background Changer: Detected potential navigation (title changed). Re-applying background color."
     );
@@ -95,8 +115,8 @@ const observeTitleChanges = () => {
   });
 
   observer.observe(titleElement, {
-    childList: true, // Observe changes to the title text node
-    subtree: true, // Observe changes within the title element
+    childList: true,
+    subtree: true,
   });
 
   console.log(
@@ -105,8 +125,4 @@ const observeTitleChanges = () => {
 };
 
 // Start observing after the initial load
-// Use requestAnimationFrame to ensure the observer starts after the initial rendering cycle
 requestAnimationFrame(observeTitleChanges);
-
-// Optional: Listen for hash changes as well, though title observation might be sufficient
-// window.addEventListener('hashchange', applyBackgroundColor);
