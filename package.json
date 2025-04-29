@@ -1,0 +1,37 @@
+{
+  "name": "firebase-console-background",
+  "displayName": "Firebase Console Background",
+  "version": "0.0.1",
+  "description": "Change Firebase Console background color for each project.",
+  "author": "Cline",
+  "scripts": {
+    "dev": "plasmo dev",
+    "build": "plasmo build",
+    "package": "plasmo package"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
+    "@tailwindcss/postcss": "^4.1.4",
+    "@types/chrome": "^0.0.317",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "autoprefixer": "^10.4.21",
+    "plasmo": "^0.90.3",
+    "postcss": "^8.5.3",
+    "prettier": "^3.5.3",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.8.3"
+  },
+  "manifest": {
+    "host_permissions": [
+      "https://console.firebase.google.com/*"
+    ],
+    "permissions": [
+      "storage"
+    ]
+  }
+}
