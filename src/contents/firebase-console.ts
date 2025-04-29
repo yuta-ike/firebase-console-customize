@@ -19,6 +19,7 @@ const applyBackgroundColor = () => {
   const match = url.match(
     /console\.firebase\.google\.com(?:\/u\/\d+)?\/project\/([^/]+)/
   );
+  const targetElements = document.querySelectorAll(".app-bar"); // Target elements with class 'app-bar'
 
   if (match?.[1]) {
     // Changed to optional chaining
@@ -36,24 +37,35 @@ const applyBackgroundColor = () => {
         console.log(
           `Firebase Background Changer: Applying color ${color} for project ${currentProjectId}`
         );
-        // Apply to body first, might need adjustment for Firebase Console's specific structure
-        document.body.style.backgroundColor = color;
-        // Potentially target more specific elements if body doesn't work reliably
-        // Example: document.querySelector('#some-firebase-main-container')?.style.backgroundColor = color;
+        // Apply to all elements with class 'app-bar'
+        for (const element of targetElements) {
+          if (element instanceof HTMLElement) {
+            // Type check for safety
+            element.style.backgroundColor = color;
+          }
+        }
       } else {
         console.log(
           `Firebase Background Changer: No color found for project ${currentProjectId}. Resetting background.`
         );
-        // Reset background if no color is set or navigating away from a colored project
-        document.body.style.backgroundColor = ""; // Reset to default
+        // Reset background for target elements
+        for (const element of targetElements) {
+          if (element instanceof HTMLElement) {
+            element.style.backgroundColor = ""; // Reset to default
+          }
+        }
       }
     });
   } else {
     console.log(
       "Firebase Background Changer: Not on a project page or Project ID not found. Resetting background."
     );
-    // Reset background if not on a recognized project page
-    document.body.style.backgroundColor = "";
+    // Reset background for target elements
+    for (const element of targetElements) {
+      if (element instanceof HTMLElement) {
+        element.style.backgroundColor = "";
+      }
+    }
   }
 };
 
